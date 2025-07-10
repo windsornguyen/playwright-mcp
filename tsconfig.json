@@ -5,11 +5,21 @@
     "moduleResolution": "nodenext",
     "strict": true,
     "module": "NodeNext",
-    "rootDir": "src",
+    "rootDir": ".",
     "outDir": "./lib",
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true,
+    "declaration": true
   },
   "include": [
-    "src",
+    "src/**/*",
+    "index.ts"
   ],
+  "exclude": [
+    "node_modules",
+    "lib",
+    "tests",
+    "extension"
+  ]
 }

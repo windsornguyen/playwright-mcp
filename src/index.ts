@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import { createConnection as createConnectionImpl } from './connection.js';
-import type { Connection } from '../index.js';
+import { createConnection as createConnectionImpl, Connection } from './connection.js';
 import { resolveConfig } from './config.js';
 import { contextFactory } from './browserContextFactory.js';
 
