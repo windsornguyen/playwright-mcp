@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Playwright MCP Server Main Entry Point
+ * Playwright MCP Server CLI
  */
 
 import { Server } from './server.js';
@@ -11,20 +11,6 @@ import type { FullConfig } from './types.js';
 
 async function main() {
   const args = process.argv.slice(2);
-  
-  // Show help if requested
-  if (args.includes('--help') || args.includes('-h')) {
-    console.log(`Playwright MCP Server
-
-Options:
-  --port <port>        Port to listen on for SSE transport
-  --host <host>        Host to bind server to (default: localhost)
-  --headless           Run browser in headless mode (headed by default)
-  --vision             Use screenshot mode instead of accessibility snapshots
-  --help               Show this help message
-`);
-    process.exit(0);
-  }
   
   // Parse command line arguments
   const portIndex = args.indexOf('--port');
@@ -61,7 +47,7 @@ Options:
   }
 }
 
-// Run the server
+// Run the CLI
 main().catch(error => {
   console.error('Failed to start server:', error);
   process.exit(1);
