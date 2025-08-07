@@ -49,15 +49,16 @@ Options:
   // Create server
   const server = new Server(config);
   server.setupExitWatchdog();
-  
+ 
+  startHttpTransport(await startHttpServer({ host, port }), server);
   // Start appropriate transport
-  if (port !== undefined) {
+  // if (port !== undefined) {
     // HTTP mode
-    const httpServer = await startHttpServer({ host, port });
-    startHttpTransport(httpServer, server);
-  } else {
+    // const httpServer = await startHttpServer({ host, port });
+    // startHttpTransport(httpServer, server);
+  // } else {
     // STDIO mode (default)
-    await startStdioTransport(server);
+    // await startStdioTransport(server);
   }
 }
 
