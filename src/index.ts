@@ -1,69 +1,58 @@
 #!/usr/bin/env node
 
 /**
- * Playwright MCP Server Main Entry Point
+ * Main entry point for the Playwright MCP Server
+ * 
+ * Transport selection logic:
+ * 1. --stdio flag forces STDIO transport
+ * 2. --port flag or PORT env var triggers HTTP transport
+ * 3. Default: STDIO for local development
  */
 
+import { loadConfig } from './config.js';
+import { parseArgs } from './cli.js';
 import { Server } from './server.js';
-import { startStdioTransport } from './transport/stdio.js';
-import { startHttpServer, startHttpTransport } from './transport/http.js';
+import { runStdioTransport, startHttpTransport } from './transport/index.js';
+import { startHttpServer } from './transport/http.js';
 import type { FullConfig } from './types.js';
 
 async function main() {
-  const args = process.argv.slice(2);
-  
-  // Show help if requested
-  if (args.includes('--help') || args.includes('-h')) {
-    console.log(`Playwright MCP Server
-
-Options:
-  --port <port>        Port to listen on for SSE transport
-  --host <host>        Host to bind server to (default: localhost)
-  --headless           Run browser in headless mode (headed by default)
-  --vision             Use screenshot mode instead of accessibility snapshots
-  --help               Show this help message
-`);
-    process.exit(0);
-  }
-  
-  // Parse command line arguments
-  const portIndex = args.indexOf('--port');
-  const port = portIndex !== -1 ? parseInt(args[portIndex + 1]) : undefined;
-  
-  const hostIndex = args.indexOf('--host');
-  const host = hostIndex !== -1 ? args[hostIndex + 1] : undefined;
-  
-  const visionMode = args.includes('--vision');
-  const headless = !args.includes('--headed');
-  
-  // Create configuration
-  const config: FullConfig = {
-    browser: {
-      browser: 'chromium',
-      headless,
-    },
-    vision: visionMode,
-    server: port ? { port } : undefined,
-  };
-  
-  // Create server
-  const server = new Server(config);
-  server.setupExitWatchdog();
- 
-  startHttpTransport(await startHttpServer({ host, port }), server);
-  // Start appropriate transport
-  // if (port !== undefined) {
-    // HTTP mode
-    // const httpServer = await startHttpServer({ host, port });
-    // startHttpTransport(httpServer, server);
-  // } else {
-    // STDIO mode (default)
-    // await startStdioTransport(server);
-  }
+    try {
+        const config = loadConfig();
+        const cliOptions = parseArgs();
+        
+        // Determine transport mode
+        const shouldUseHttp = cliOptions.port || (process.env.PORT && !cliOptions.stdio);
+        const port = cliOptions.port || config.port;
+        
+        // Create configuration with CLI options
+        const fullConfig: FullConfig = {
+            browser: {
+                browser: 'chromium',
+                headless: cliOptions.headless !== false,
+                context: 'isolated',
+            },
+            vision: cliOptions.vision || false,
+            port,
+        };
+        
+        // Create server
+        const server = new Server(fullConfig);
+        server.setupExitWatchdog();
+        
+        if (shouldUseHttp) {
+            // HTTP transport for production/cloud deployment
+            const httpServer = await startHttpServer({ host: cliOptions.host, port });
+            startHttpTransport(httpServer, server);
+        } else {
+            // STDIO transport for local development
+            await runStdioTransport(server);
+        }
+    } catch (error) {
+        console.error("Fatal error running Playwright server:", error);
+        process.exit(1);
+    }
 }
 
 // Run the server
-main().catch(error => {
-  console.error('Failed to start server:', error);
-  process.exit(1);
-});
+main();

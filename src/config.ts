@@ -4,6 +4,18 @@
 
 import type { FullConfig, ToolCapability } from './types.js';
 
+export function loadConfig(): FullConfig {
+  return {
+    browser: {
+      browser: 'chromium',
+      headless: true,
+      context: 'isolated',
+    },
+    vision: false,
+    port: process.env.PORT ? parseInt(process.env.PORT) : 8080,
+  };
+}
+
 export function parseConfig(options: any = {}): FullConfig {
   return {
     browser: {

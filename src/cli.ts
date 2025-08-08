@@ -1,54 +1,49 @@
-#!/usr/bin/env node
-
 /**
- * Playwright MCP Server CLI
+ * Playwright MCP Server CLI argument parser
  */
 
-import { Server } from './server.js';
-import { startStdioTransport } from './transport/stdio.js';
-import { startHttpServer, startHttpTransport } from './transport/http.js';
-import type { FullConfig } from './types.js';
+interface CliOptions {
+  port?: number;
+  stdio?: boolean;
+  host?: string;
+  vision?: boolean;
+  headless?: boolean;
+  help?: boolean;
+}
 
-async function main() {
+export function parseArgs(): CliOptions {
   const args = process.argv.slice(2);
+  const options: CliOptions = {};
+  
+  // Show help if requested
+  if (args.includes('--help') || args.includes('-h')) {
+    console.log(`Playwright MCP Server
+
+Options:
+  --port <port>        Port to listen on for HTTP transport
+  --host <host>        Host to bind server to (default: localhost)
+  --stdio              Force STDIO transport
+  --headless           Run browser in headless mode (headed by default)
+  --vision             Use screenshot mode instead of accessibility snapshots
+  --help               Show this help message
+`);
+    process.exit(0);
+  }
   
   // Parse command line arguments
   const portIndex = args.indexOf('--port');
-  const port = portIndex !== -1 ? parseInt(args[portIndex + 1]) : undefined;
+  if (portIndex !== -1 && args[portIndex + 1]) {
+    options.port = parseInt(args[portIndex + 1]);
+  }
   
   const hostIndex = args.indexOf('--host');
-  const host = hostIndex !== -1 ? args[hostIndex + 1] : undefined;
-  
-  const visionMode = args.includes('--vision');
-  const headless = !args.includes('--headed');
-  
-  // Create configuration
-  const config: FullConfig = {
-    browser: {
-      browser: 'chromium',
-      headless,
-    },
-    vision: visionMode,
-    server: port ? { port } : undefined,
-  };
-  
-  // Create server
-  const server = new Server(config);
-  server.setupExitWatchdog();
-  
-  // Start appropriate transport
-  if (port !== undefined) {
-    // HTTP mode
-    const httpServer = await startHttpServer({ host, port });
-    startHttpTransport(httpServer, server);
-  } else {
-    // STDIO mode (default)
-    await startStdioTransport(server);
+  if (hostIndex !== -1 && args[hostIndex + 1]) {
+    options.host = args[hostIndex + 1];
   }
+  
+  options.stdio = args.includes('--stdio');
+  options.vision = args.includes('--vision');
+  options.headless = !args.includes('--headed');
+  
+  return options;
 }
-
-// Run the CLI
-main().catch(error => {
-  console.error('Failed to start server:', error);
-  process.exit(1);
-});
