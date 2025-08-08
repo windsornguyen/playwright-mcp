@@ -78,6 +78,7 @@ export interface FullConfig {
   server?: {
     port?: number;
   };
+  port?: number;
   vision?: boolean;
   capabilities?: ToolCapability[];
 }
